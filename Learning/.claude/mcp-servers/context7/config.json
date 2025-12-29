@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "python",
+      "args": [
+        "${CLAUDE_CONTEXT7_SERVER_PATH}/server.py"
+      ],
+      "env": {
+        "CLAUDE_CONTEXT7_SERVER_PATH": "${configDir}/mcp-servers/context7"
+      }
+    }
+  }
+}
