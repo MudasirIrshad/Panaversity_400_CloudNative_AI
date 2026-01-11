@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 app = FastAPI()
 
+
 def get_session():
     with Session(engine) as session:
         yield session
