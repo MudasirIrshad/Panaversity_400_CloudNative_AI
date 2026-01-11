@@ -24,55 +24,43 @@ Neon is a serverless PostgreSQL platform that provides branchable, auto-scaling 
 Setting up the database connection and basic model:
 
 ```python
-from typing import Optional
 from sqlmodel import SQLModel, Field, create_engine
-from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+import os
 
-# Environment Configuration
-class Settings(BaseSettings):
-    database_url: str = "sqlite:///./test.db"
-    app_name: str = "My API"
-    debug: bool = False
+# Load environment variables from a .env file
+load_dotenv()
 
-    class Config:
-        env_file = ".env"
+# Get the database URL from environment variables
+db_url = os.getenv("DATABASE_URL")
 
-settings = Settings()
+# Create the database engine
+engine = create_engine(f"{db_url}", echo=True)
 
 # Basic Model
 class Task(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    title: str = Field(min_length=1, max_length=200)
-    description: str
-    completed: bool = False
+    id: int | None = Field(default=None, primary_key=True)
+    title: str
+    description: str | None = Field(default=None)
 
-# Database Engine
-DATABASE_URL = settings.database_url
-engine = create_engine(DATABASE_URL, echo=settings.debug)
+def create_tables():
+    print("\nCreating database tables...\n")
+    SQLModel.metadata.create_all(engine)
+    print("\nTables created successfully.\n")
+
+if __name__ == "__main__":
+    create_tables()
 ```
 
 ### Level 2: Session Management
 Implementing proper session management with dependency injection:
 
 ```python
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import Depends
 from sqlmodel import Session
 
-# Database setup function
-def create_db_and_tables():
-    SQLModel.metadata.create_all(bind=engine)
-
-# Lifespan management
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    yield
-
-app = FastAPI(lifespan=lifespan)
-
 # Session dependency
-def get_session() -> Session:
+def get_session():
     with Session(engine) as session:
         yield session
 ```
@@ -81,16 +69,10 @@ def get_session() -> Session:
 Full CRUD operations with proper error handling:
 
 ```python
-from fastapi import HTTPException
-from sqlmodel import select
+from fastapi import FastAPI, Depends
+from sqlmodel import Session, select
 
-# GET - Read all tasks
-@app.get("/tasks")
-def get_tasks(session: Session = Depends(get_session)):
-    tasks = session.exec(select(Task)).all()
-    if not tasks:
-        raise HTTPException(status_code=404, detail="No tasks found")
-    return tasks
+app = FastAPI(title="Dependency Injection with SQLModel and Environment Config")
 
 # POST - Create task
 @app.post("/tasks")
@@ -98,58 +80,110 @@ def create_task(task: Task, session: Session = Depends(get_session)):
     session.add(task)
     session.commit()
     session.refresh(task)
-    return {"message": "Task created successfully", "task": task}
+    return {"task": task}
 
-# PUT - Update task
-@app.put("/tasks/{task_id}")
-def update_task(task_id: int, task: Task, session: Session = Depends(get_session)):
-    db_task = session.get(Task, task_id)
-    if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    task_data = task.model_dump(exclude_unset=True)
-    for key, value in task_data.items():
-        setattr(db_task, key, value)
-
-    session.add(db_task)
-    session.commit()
-    session.refresh(db_task)
-    return {"message": "Task updated successfully", "task": db_task}
-
-# DELETE - Delete task
-@app.delete("/tasks/{task_id}")
-def delete_task(task_id: int, session: Session = Depends(get_session)):
-    db_task = session.get(Task, task_id)
-    if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    session.delete(db_task)
-    session.commit()
-    return {"message": "Task deleted successfully", "task": db_task}
+# GET - Read all tasks
+@app.get("/tasks")
+def get_tasks(session: Session = Depends(get_session)):
+    tasks = session.exec(select(Task)).all()
+    return {"tasks": tasks}
 ```
 
-## Neon PostgreSQL Setup
+## File Organization Pattern
+Separate concerns by organizing code into multiple files:
 
-### Creating a Neon Account
-1. Go to https://neon.tech and sign up for an account
-2. Create a new project in the Neon dashboard
-3. Get your connection string from the project dashboard
+### db_schema.py - Database Models and Engine
+```python
+from sqlmodel import SQLModel, Field, create_engine, Session
+from dotenv import load_dotenv
+import os
 
-### Environment Configuration
-Add your Neon connection string to your `.env` file:
+# Load environment variables from a .env file
+load_dotenv()
+
+# Get the database URL from environment variables
+db_url = os.getenv("DATABASE_URL")
+
+# Create the database engine
+engine = create_engine(f"{db_url}", echo=True)
+
+class Task(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    title: str
+    description: str | None = Field(default=None)
+
+def create_tables():
+    print("\nCreating database tables...\n")
+    SQLModel.metadata.create_all(engine)
+    print("\nTables created successfully.\n")
+
+if __name__ == "__main__":
+    create_tables()
+```
+
+### main.py - API Endpoints
+```python
+from fastapi import FastAPI, Depends
+from sqlmodel import Session, select
+from db_schema import engine, Task
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+app = FastAPI(title="Dependency Injection with SQLModel and Environment Config")
+
+@app.post("/tasks")
+def create_task(task: Task, session: Session = Depends(get_session)):
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return {"task": task}
+
+@app.get("/tasks")
+def get_tasks(session: Session = Depends(get_session)):
+    tasks = session.exec(select(Task)).all()
+    return {"tasks": tasks}
+```
+
+## Environment Configuration
+
+### Setting up .env file
+Create a `.env` file in your project root:
 
 ```
-DATABASE_URL=postgresql://username:password@ep-xxx.us-east-1.aws.neon.tech/dbname?sslmode=require
-APP_NAME=My FastAPI App
-DEBUG=False
+DATABASE_URL=sqlite:///./task_api.db
+# For PostgreSQL: postgresql://username:password@localhost/dbname
+# For Neon: postgresql://username:password@ep-xxx.us-east-1.aws.neon.tech/dbname?sslmode=require
+```
+
+### Loading Environment Variables
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load variables from .env file
+db_url = os.getenv("DATABASE_URL")  # Access the database URL
 ```
 
 ### Installing Required Dependencies
 ```bash
-pip install sqlmodel psycopg2-binary python-dotenv pydantic-settings
+pip install sqlmodel python-dotenv
+# For PostgreSQL: pip install psycopg2-binary
+# For async support: pip install asyncpg
 ```
 
 ## Model Definition Best Practices
+
+### Basic Model Structure
+```python
+from sqlmodel import SQLModel, Field
+
+class Task(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    title: str
+    description: str | None = Field(default=None)
+```
 
 ### Field Validation
 ```python
@@ -157,26 +191,9 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 
 class Task(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     title: str = Field(min_length=1, max_length=200)
-    description: str = Field(max_length=1000)
-    completed: bool = False
-    priority: int = Field(default=1, ge=1, le=5)  # Priority from 1-5
-```
-
-### Separate Pydantic Models for API Operations
-```python
-from pydantic import BaseModel
-
-class TaskCreate(BaseModel):
-    title: str
-    description: str
-    completed: bool = False
-
-class TaskUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    completed: Optional[bool] = None
+    description: str | None = Field(default=None, max_length=1000)
 ```
 
 ## Connection Management Patterns
@@ -185,33 +202,20 @@ class TaskUpdate(BaseModel):
 ```python
 from sqlmodel import create_engine
 import os
+from dotenv import load_dotenv
 
-# For production with Neon
-engine = create_engine(
-    DATABASE_URL,
-    echo=settings.debug,
-    pool_pre_ping=True,  # Verify connections before use
-    pool_size=5,         # Number of connection pool
-    max_overflow=10      # Additional connections beyond pool_size
-)
+load_dotenv()
+db_url = os.getenv("DATABASE_URL")
+engine = create_engine(f"{db_url}", echo=True)  # echo=True for debugging
 ```
 
-### Session Dependency with Error Handling
+### Session Dependency
 ```python
-from contextlib import contextmanager
 from sqlmodel import Session
 
-@contextmanager
 def get_session():
-    session = Session(engine)
-    try:
+    with Session(engine) as session:
         yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 ```
 
 ## Before Implementation
@@ -230,14 +234,14 @@ Only ask user for THEIR specific requirements (domain expertise is in this skill
 
 ## Migration Considerations
 
-For production applications, consider using Alembic for database migrations:
+For simple setup during development, `SQLModel.metadata.create_all(engine)` is sufficient:
 
-```bash
-pip install alembic
-alembic init alembic
+```python
+def create_tables():
+    SQLModel.metadata.create_all(engine)
 ```
 
-For simple setup during development, `create_all()` is sufficient but requires migration tools for production changes.
+For production applications, consider using Alembic for database migrations.
 
 ## Error Handling
 
@@ -245,33 +249,18 @@ For simple setup during development, `create_all()` is sufficient but requires m
 - Connection timeouts
 - Unique constraint violations
 - Foreign key constraint violations
-- Connection pool exhaustion
 
-### Handling Database Errors in FastAPI
+### Session Management with Auto-commit/Rollback
 ```python
-from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException, status
-
-@app.post("/tasks")
-def create_task(task: TaskCreate):
-    try:
-        db_task = Task.model_validate(task)
-        session.add(db_task)
-        session.commit()
-        session.refresh(db_task)
-        return db_task
-    except IntegrityError:
-        session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Task with this ID already exists"
-        )
+# The Session context manager automatically handles commits and rollbacks
+def get_session():
+    with Session(engine) as session:
+        yield session  # FastAPI will handle commits/rollbacks with Depends
 ```
 
 ## Security Considerations
 
 1. Never expose database credentials in code
 2. Use environment variables for database URLs
-3. Implement proper input validation using Pydantic models
+3. Store sensitive data in `.env` files and add `.env` to `.gitignore`
 4. Use parameterized queries (SQLModel handles this automatically)
-5. Limit database connection pool sizes appropriately
