@@ -18,7 +18,13 @@ class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     description: str | None = Field(default=None)
+    user_id: int
 
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    password: str
 
 def create_tables():
     print("\nCreating database tables...\n")

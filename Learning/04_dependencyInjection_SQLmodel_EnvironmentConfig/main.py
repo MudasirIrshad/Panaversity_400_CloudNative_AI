@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 from sqlmodel import Session, select
 from fastapi import Depends
-from db_schema import engine
+from db_schema import User, engine
 
 from db_schema import Task
 
@@ -40,3 +40,10 @@ def get_single_task(task_id: int, session: Session = Depends(get_session)):
         return {"error": "Task not found"}
     return {"task": task}
 
+@app.post("/users")
+def create_user(user: User, session: Session = Depends(get_session)):
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return {"user": user}
