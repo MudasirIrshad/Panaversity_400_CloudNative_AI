@@ -188,6 +188,67 @@ async def read_items(commons: CommonsDep):
 
 ## Security and Authentication
 
+### Password Hashing with pwdlib/Argon2
+Secure password hashing using pwdlib with Argon2 algorithm:
+
+```python
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+
+password_hash = PasswordHash((Argon2Hasher(),))
+
+def hash_password(password: str) -> str:
+    """Hash a password with Argon2."""
+    return password_hash.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash."""
+    return password_hash.verify(plain_password, hashed_password)
+```
+
+### User Registration with Password Hashing
+Implement secure user registration with duplicate email prevention:
+
+```python
+from sqlmodel import SQLModel, Field, Session, select
+from fastapi import Depends, FastAPI
+from typing import Annotated
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    hashed_password: str
+
+class UserCreate(SQLModel):
+    name: str
+    email: str
+    password: str
+
+@app.post("/user/signup")
+def signup_user(user_data: UserCreate, session: Session = Depends(get_session)):
+    # Check if user already exists
+    existing = session.exec(
+        select(User).where(User.email == user_data.email)
+    ).first()
+
+    if existing:
+        return {"error": "User already exists"}
+
+    # Create new user with hashed password
+    user = User(
+        name=user_data.name,
+        email=user_data.email,
+        hashed_password=hash_password(user_data.password)
+    )
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return {"user": user}
+```
+
 ### OAuth2 with Password Flow
 ```python
 from fastapi import Depends, FastAPI
@@ -241,6 +302,71 @@ class UserOut(BaseModel):
 @app.post("/user/", response_model=UserOut)
 async def create_user(user: UserIn) -> UserOut:
     return user  # password automatically filtered out
+```
+
+### Secure User Models with Password Hashing
+Following security best practices by separating input and output models for user registration:
+
+```python
+from fastapi import FastAPI, Depends, HTTPException
+from sqlmodel import SQLModel, Field, Session, select
+from typing import Annotated
+
+app = FastAPI()
+
+class User(SQLModel, table=True):
+    """Database model with hashed password field"""
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    hashed_password: str  # Never exposed in API responses
+
+class UserCreate(SQLModel):
+    """Input model for user registration - plain text password"""
+    name: str
+    email: str
+    password: str  # Plain text password received from client
+
+class UserResponse(SQLModel):
+    """Output model - excludes sensitive data"""
+    id: int
+    name: str
+    email: str
+
+def get_session():  # Assuming you have a session dependency
+    # Implementation would depend on your database setup
+    pass
+
+@app.post("/user/signup", response_model=UserResponse)
+def signup_user(user_data: UserCreate, session: Session = Depends(get_session)):
+    # Check if user already exists
+    existing = session.exec(
+        select(User).where(User.email == user_data.email)
+    ).first()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Hash the password before storing
+    hashed_pw = hash_password(user_data.password)
+
+    # Create user with hashed password
+    user = User(
+        name=user_data.name,
+        email=user_data.email,
+        hashed_password=hashed_pw
+    )
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    # Return safe response model without sensitive data
+    return UserResponse(
+        id=user.id,
+        name=user.name,
+        email=user.email
+    )
 ```
 
 ## Testing with TestClient

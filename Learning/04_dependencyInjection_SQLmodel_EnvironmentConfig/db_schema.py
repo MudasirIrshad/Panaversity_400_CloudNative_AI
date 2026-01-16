@@ -24,6 +24,11 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     email: str
+    hashed_password: str
+
+class UserCreate(SQLModel):
+    name: str
+    email: str
     password: str
 
 def create_tables():

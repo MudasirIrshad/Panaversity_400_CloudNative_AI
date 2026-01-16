@@ -21,10 +21,10 @@ Neon is a serverless PostgreSQL platform that provides branchable, auto-scaling 
 ## Progressive Implementation Levels
 
 ### Level 1: Basic Setup
-Setting up the database connection and basic model:
+Setting up the database connection and basic models:
 
 ```python
-from sqlmodel import SQLModel, Field, create_engine
+from sqlmodel import SQLModel, Field, create_engine, Session
 from dotenv import load_dotenv
 import os
 
@@ -37,11 +37,18 @@ db_url = os.getenv("DATABASE_URL")
 # Create the database engine
 engine = create_engine(f"{db_url}", echo=True)
 
-# Basic Model
+# Basic Models
 class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     description: str | None = Field(default=None)
+    user_id: int
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    password: str
 
 def create_tables():
     print("\nCreating database tables...\n")
@@ -71,6 +78,7 @@ Full CRUD operations with proper error handling:
 ```python
 from fastapi import FastAPI, Depends
 from sqlmodel import Session, select
+from db_schema import Task, User
 
 app = FastAPI(title="Dependency Injection with SQLModel and Environment Config")
 
@@ -87,6 +95,22 @@ def create_task(task: Task, session: Session = Depends(get_session)):
 def get_tasks(session: Session = Depends(get_session)):
     tasks = session.exec(select(Task)).all()
     return {"tasks": tasks}
+
+# GET - Read single task by ID
+@app.get("/tasks/{task_id}")
+def get_single_task(task_id: int, session: Session = Depends(get_session)):
+    task = session.get(Task, task_id)
+    if not task:
+        return {"error": "Task not found"}
+    return {"task": task}
+
+# POST - Create user
+@app.post("/users")
+def create_user(user: User, session: Session = Depends(get_session)):
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return {"user": user}
 ```
 
 ## File Organization Pattern
@@ -111,6 +135,13 @@ class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     description: str | None = Field(default=None)
+    user_id: int
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    password: str
 
 def create_tables():
     print("\nCreating database tables...\n")
@@ -124,8 +155,11 @@ if __name__ == "__main__":
 ### main.py - API Endpoints
 ```python
 from fastapi import FastAPI, Depends
+import uvicorn
 from sqlmodel import Session, select
-from db_schema import engine, Task
+from fastapi import Depends
+from db_schema import User, engine
+from db_schema import Task
 
 def get_session():
     with Session(engine) as session:
@@ -135,15 +169,33 @@ app = FastAPI(title="Dependency Injection with SQLModel and Environment Config")
 
 @app.post("/tasks")
 def create_task(task: Task, session: Session = Depends(get_session)):
+
     session.add(task)
     session.commit()
     session.refresh(task)
+
     return {"task": task}
 
 @app.get("/tasks")
 def get_tasks(session: Session = Depends(get_session)):
     tasks = session.exec(select(Task)).all()
+
     return {"tasks": tasks}
+
+@app.get("/tasks/{task_id}")
+def get_single_task(task_id: int, session: Session = Depends(get_session)):
+    task = session.get(Task, task_id)
+    if not task:
+        return {"error": "Task not found"}
+    return {"task": task}
+
+@app.post("/users")
+def create_user(user: User, session: Session = Depends(get_session)):
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return {"user": user}
 ```
 
 ## Environment Configuration
@@ -183,6 +235,13 @@ class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     description: str | None = Field(default=None)
+    user_id: int
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    password: str
 ```
 
 ### Field Validation
@@ -194,6 +253,13 @@ class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
+    user_id: int
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(regex=r'^[^@]+@[^@]+\.[^@]+$')  # Basic email validation
+    password: str = Field(min_length=6)  # At least 6 characters
 ```
 
 ## Connection Management Patterns
