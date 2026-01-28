@@ -1,0 +1,63 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# VSCode
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local configuration
+.env
+venv/
+env/
+.venv/
+
+# Documentation
+docs/_build/
+
+# Logs
+*.log
+
+# Coverage
+.coverage*
+coverage.xml
+
+# Distribution / packaging
+.pybuild/
+.tox/
+.nox/

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(dir /s *.docker* *.Dockerfile* *.yaml *.yml *.env)",
+      "Bash(dir \"C:\\\\Users\\\\DEll\\\\Desktop\\\\Panaversity_400_CloudNative_AI\\\\Learning\\\\Docker\\\\.claude\\\\skills\\\\docker-skill\" /s)"
+    ]
+  }
+}
