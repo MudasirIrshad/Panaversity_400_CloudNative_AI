@@ -13,7 +13,7 @@ todo_items = []
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "Mudasir Irshad"}
 
 @app.get("/todo")
 def get_todo():
