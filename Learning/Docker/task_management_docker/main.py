@@ -12,6 +12,10 @@ def get_session():
         yield session
 
 
+@app.get("/")
+def root_file():
+    return {"message": "Welcome to the Task Management API!"}
+
 @app.post("/create_task")
 def create_task(task: Task, session: Session = Depends(get_session)):
     session.add(task)
