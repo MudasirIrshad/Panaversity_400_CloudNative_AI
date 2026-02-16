@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
+import os
 
 class Todo_Item(BaseModel):
     item_id: int
@@ -17,6 +18,8 @@ def read_root():
 
 @app.get("/todo")
 def get_todo():
+    print("Fetching all todo items\n", os.getenv("LOGS")) # this is comming from the env variable in the dockerfile
+
     if not todo_items:
         raise HTTPException(status_code=404, detail="No todo items found")
     return todo_items

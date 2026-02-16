@@ -6,6 +6,7 @@ ARG PYTHON_VERSION=3.13
 FROM python:3.13-alpine AS builder
 
 ENV PYTHONBUFFERED=1
+ENV LOGS = info
 
 WORKDIR /app
 
