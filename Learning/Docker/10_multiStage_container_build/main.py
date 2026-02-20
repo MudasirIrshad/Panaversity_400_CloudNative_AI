@@ -14,7 +14,7 @@ todo_items = []
 
 @app.get("/")
 def read_root():
-    return {"Hello": "Mudasir Irshad Khan"}
+    return {"Hello": "Mudasir Irshad"}
 
 @app.get("/todo")
 def get_todo():
