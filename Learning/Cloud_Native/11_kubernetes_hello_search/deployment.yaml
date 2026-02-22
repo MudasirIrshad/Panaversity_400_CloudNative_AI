@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-management
+  namespace: mudasirirshad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: task-management
+  template:
+    metadata:
+      labels:
+        app: task-management
+    spec:
+      containers:
+        - name: task-management-app
+          image: task-management-app:v2        # make sure this exists locally
+          imagePullPolicy: IfNotPresent       # use local image without pulling
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "DATABSASE_URL_PLACEHOLDER"  # replace with actual database URL

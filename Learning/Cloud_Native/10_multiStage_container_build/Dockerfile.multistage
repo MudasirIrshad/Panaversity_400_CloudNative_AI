@@ -1,12 +1,9 @@
-ARG PYTHON_VERSION=3.13
-
-
 # STAGE 1: Build the application
 
 FROM python:3.13-alpine AS builder
 
 ENV PYTHONBUFFERED=1
-ENV LOGS = info
+ENV LOGS=info
 
 WORKDIR /app
 
