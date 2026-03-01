@@ -4,7 +4,7 @@ This README documents my **hands-on learning** with Docker and Kubernetes, inclu
 
 ---
 
-## 1️⃣ Docker
+## 1️⃣ Docker 
 
 ### 1.1 Build Docker Image
 
