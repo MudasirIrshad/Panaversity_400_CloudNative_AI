@@ -2,12 +2,12 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: task-management-deployer #This is the role along with unique name of guy who deploy this / this is the resource name
-  namespace: taskmanagement #This is the namespace where this role will be applied / this is the resouce location
+  namespace: task-management #This is the namespace where this role will be applied / this is the resouce location
 rules:
   - apiGroups: ["apps"]
-    resources: ["deployment", "replicasets"]
+    resources: ["deployments", "replicasets"]
     verbs: ["get", "list", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["services", "pods"]
     verbs: ["get", "list"]
-    
+
