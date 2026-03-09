@@ -119,33 +119,4 @@ $ echo "Step 8️⃣: Summary of Learning Flow"
 
 ---
 
-$ echo "Step 9️⃣: Network Flow Diagram (ASCII)"
-
-# Visualize FastAPI pod access from WSL/host
-
-$ cat <<EOF
-+-----------------+           +-------------------+         +-------------------------+
-| Windows Host /  |           |      WSL Shell     |         |    Kubernetes Pod       |
-| Browser / Tools |           | (Linux Terminal)  |         |  task-management-pod    |
-+-----------------+           +-------------------+         +-------------------------+
-        |                               |                                |
-        |  localhost:8000 (browser)     |                                |
-        |------------------------------>|                                |
-        |                               |  host.docker.internal:8000     |
-        |                               |------------------------------->|
-        |                               |                                |
-        |                               |         Pod IP: 10.244.0.15    |
-        |                               |<-------------------------------|
-        |                               |                                |
-        |  curl / wget request          |                                |
-        |-------------------------------------------------------------->|
-        |                               |                                |
-        |<------------------------------|                                |
-        |  API Response JSON / HTML      |                                |
-EOF
-
-> This diagram shows the flow: host → WSL → Pod IP → FastAPI → back.
-
----
-
 $ echo "✅ End of session. You now know Linux variables, WSL access, pod IP, BusyBox testing, port-forwarding, and label selectors in Kubernetes."
