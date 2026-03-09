@@ -61,7 +61,7 @@ docker run -it -v ${PWD}:/app -w /app python:3.12 bash
 - `-w /app` → sets working directory  
 - Useful for live testing / running commands interactively  
 
----
+--- 
 
 ## 2️⃣ Kubernetes (kubectl)
 
