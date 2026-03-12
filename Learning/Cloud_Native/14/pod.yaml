@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: my-pod
+  name: my-pod
+spec:
+  containers:
+  - image: task-management-app:v1
+    imagePullPolicy: IfNotPresent
+    name: my-pod
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
