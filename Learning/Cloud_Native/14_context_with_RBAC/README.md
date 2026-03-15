@@ -3,7 +3,7 @@
 This guide briefly covers Kubernetes pod basics, management, and context switching, along with essential RBAC concepts.
 
 ## Pod Fundamentals
-
+ 
 - **Pod:** Smallest K8s unit, holds 1+ containers.
 - **Immutability:** Pod name and namespace are set at creation. Container names are also immutable within a pod spec.
 - **Lifecycle:** Pending → Running → Succeeded/Failed. Pods are ephemeral.
