@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: task-manager
+  name: task-manager
+spec:
+  containers:
+    - env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+      image: task-manager-image
+      imagePullPolicy: IfNotPresent
+      name: task-manager
+      ports:
+        - containerPort: 8000
+      resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}

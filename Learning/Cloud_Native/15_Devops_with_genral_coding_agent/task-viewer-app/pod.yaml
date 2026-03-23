@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: task-viewer
+  name: task-viewer
+spec:
+  containers:
+    - image: task-viewer-image
+      imagePullPolicy: IfNotPresent
+      name: task-viewer
+      ports:
+        - containerPort: 8000
+      resources: {}
+      env:
+        - name: TASK_MANAGER_URL
+          value: http://task-manager:8000
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
