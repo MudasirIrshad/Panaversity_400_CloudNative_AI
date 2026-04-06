@@ -1,0 +1,30 @@
+# STAGE 1: Build the application
+
+FROM python:3.13-alpine AS builder
+
+ENV PYTHONBUFFERED=1
+ENV LOGS=info
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+RUN pip install --no-cache-dir uv && uv pip install --system --no-cache -r pyproject.toml && pip uninstall -y uv
+
+
+# STAGE 2: Create a smaller runtime image
+FROM python:3.13-alpine AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY ./main.py ./
+COPY ./AI_agent.py ./
+
+EXPOSE 8000
+EXPOSE 8501
+
+CMD [ "uvicorn", "main:app", "--reload","--host", "0.0.0.0", "--port", "8000"]
+CMD [ "uv", "run", "streamlit", "run", "--port", "8501"]
