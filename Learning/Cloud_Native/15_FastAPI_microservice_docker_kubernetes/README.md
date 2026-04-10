@@ -416,8 +416,8 @@ Kubernetes Cluster
 └── calls → [http://task-manager:8000](http://task-manager:8000)
 
 ```
-
 ---
+
 
 # 🚀 Final Takeaways
 
