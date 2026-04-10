@@ -1,0 +1,19 @@
+services:
+  api:
+    build: 
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+
+  ui:
+    build:
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      - API_BASE_URL=${API_BASE_URL}
+      - LLM_BASE_URL=${LLM_BASE_URL}
+    depends_on:
+      - api
