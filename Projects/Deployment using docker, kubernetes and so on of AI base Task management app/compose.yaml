@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     environment:
-      - API_BASE_URL=${API_BASE_URL}
-      - LLM_BASE_URL=${LLM_BASE_URL}
+      API_BASE_URL: http://api:8000
+      LLM_BASE_URL: http://host.docker.internal:11434/v1
     depends_on:
       - api
